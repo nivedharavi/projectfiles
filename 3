@@ -1,0 +1,127 @@
+//   stringADT <project3>
+//   EE w312 Project 1 submission by
+//   Nivedha Ravi
+//   nr9475
+//   Slip days used: <0>
+//   Summer 2017
+#include <stdio.h>
+#include <stdint.h>
+#include <assert.h>
+#include <stdlib.h>
+#include "String.h"
+
+/* use these two macros and the function functions if you want -- not
+   required */
+#define SIGNATURE (~0xdeadbeef)
+
+/** STRING(s)
+ * Helper macro for accessing ut String object (if applicable)
+ * [INPUT] pointer to cstring
+ * [OUTPUT] pointer to UT String object (if applicable)
+ */
+#define STRING(s) ((String*)(s - 3*sizeof(uint32_t)))
+
+/* this simple function can be useful when you implement stage 4 you
+ * are not required to use the function, and you can implement stage 4
+ * without it */
+int32_t isOurs(const char* s) {
+    if (STRING(s)->check == SIGNATURE) { return 1; }
+    else { return 0; }
+}
+
+
+char* utstrdup(const char* src) {
+    uint32_t index = 0;
+    uint32_t* p;
+    while (*src!=0){
+        index++;
+        src++;
+    }
+    src = src - index;//reset back to the beginning of the input string
+    p = (uint32_t*)malloc((sizeof(uint32_t) *3) + index +1); // allocates memory for 3  ints before the characters +number of characters + null
+    if (p!=NULL){
+        String *myNewString = (String*) p;
+        myNewString->length = index; //set metadata for new string struct
+        myNewString->capacity = index;
+        myNewString->check = SIGNATURE;
+        for (int i =0; i<=index; i++){ //copy string to the area in the struct
+            myNewString->data[i] = src[i];
+        }
+        return myNewString->data;
+    }
+    return NULL;
+
+}
+
+
+uint32_t utstrlen(const char* utstr) {
+    uint32_t strLength = 0;
+    String* m = STRING(utstr);
+    assert(isOurs(utstr)); //checks to see if the parameter is actually a utstr
+    strLength = m->length; //access the metadata
+    return strLength; //return int
+}
+
+
+char* utstrcat(char* s, const char* suffix) {
+    uint32_t checkCap = 0;
+    uint32_t length  = 0;
+    uint32_t i = 0;
+    String* n  = STRING(s);
+    assert(isOurs(s));
+    checkCap = n->capacity;
+    length  = utstrlen(n->data);
+    if (checkCap == length){ // if length of existing utstr is already at capacity, do not add suffix and return original string
+        return n->data;
+    }
+    while((length < checkCap)&&suffix[i]!=0){ // checks to make sure that the capacity is not exeeded and the suffix is not at the end of
+        n->data[length] = suffix[i]; // copies the characters of the suffix into the utstr
+        i++; // increments the pointer of Utstr
+        length++;
+    }
+    n->data[length] = 0; // sets null character to the end of the concatenated string
+    n->length = length; // sets new length to the metadata
+    return n->data; // return the beginning of the character pointer to the concatenated string;
+
+}
+
+
+char* utstrcpy(char* dst, const char* src) {
+    assert(isOurs(dst)); //checks to see if the input is a ut string
+    String* c = STRING(dst); //resets pointer to beginning of struct
+    c->length = 0; //sets metadata to 0 so that original string is written over
+    char* n =  utstrcat(c->data,src); //sends new struct to utstrcat which will copy the string over
+    return n; //return the pointer to the string data
+
+}
+
+
+void utstrfree(char* self) {
+    assert(isOurs(self)); // checks to see if signature is accurate
+   String* p = STRING(self); //goes to beginning of string struct
+    free(p); //frees entire struct on heap
+}
+
+
+char* utstrrealloc(char* s, uint32_t new_capacity) {
+    uint32_t i = 0;
+    uint32_t length = 0; //set initial length to 0
+    String* x = STRING(s); //sets pointer back to beginning of string struct
+    assert(isOurs(s));//checks to see if the string passed in is indeed a ut string
+    if(x->capacity>= new_capacity){ //if capacity is equal to or greater than existing capacity - return existing struct
+        return x->data;
+    }
+    length = utstrlen(x->data);
+    String* copy = (String*) malloc(sizeof(char)*new_capacity +1+(3*sizeof(uint32_t))); // allocate memory for size of new string + null + 3 ints
+    while(x->data[i]!=0){
+        copy->data[i] = x->data[i]; //copy data from input struct to new struct
+        i++;
+    }
+    copy->data[i] = 0;
+    copy->length = length;
+    copy->capacity = new_capacity;
+    copy->check = SIGNATURE; //set metadata of struct
+    free(x); //free pointer to original string
+    return copy->data; //return pointer to character string in new struct
+}
+
