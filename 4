@@ -1,0 +1,228 @@
+/*
+Nivedha Ravi
+ nr9475
+ EE312 Summer 2015
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include<string.h>
+#include <assert.h>
+#include "MyString.h"
+#include "Invent.h"
+
+#define MAX_CUSTOMERS 1000
+Customer customers[MAX_CUSTOMERS]; //dont want to free this from the heap as this is what is being accessed from main
+int num_customers = 0; //everything else should be freed in the functions
+String Bottles1 = StringCreate("Bottles");
+String Diapers1 = StringCreate("Diapers");
+String Rattles1 = StringCreate("Rattles");
+
+typedef struct babyItems{
+    int Bottles;
+    int Diapers;
+    int Rattles;
+} babyItems;
+babyItems Inventory;
+
+
+/* you'll probably need several more global variables */
+/* and of course, you have a few functions to write */
+/* clear the inventory and reset the customer database to empty */
+void reset(void) {
+    Inventory.Bottles = 0;
+    Inventory.Diapers = 0;
+    Inventory.Rattles = 0;
+    int j = 0;
+    while(j<num_customers){
+        StringDestroy(&customers[j].name);
+        customers[j].bottles=0;
+        customers[j].diapers=0;
+        customers[j].rattles = 0;
+        j++;
+    }
+    num_customers = 0;
+}
+
+void processSummarize() {
+    int B1 = Inventory.Bottles;
+    int D1 = Inventory.Diapers;
+    int R1 = Inventory.Rattles;
+    int check = -1;
+    int maxbottles = 0;
+    if (num_customers == 0) { return; }
+    printf("There are %d Bottles, %d Diapers, and %d Rattles in inventory\n", B1, D1, R1);
+    printf("we have had a total of %d different customers\n", num_customers);
+    int i = 0;
+    while (i < num_customers) {
+        if (customers[i].bottles > check) {
+            check = customers[i].bottles;
+            maxbottles = i;
+            i++;
+        } else {
+            i++;
+        }
+
+    }//end of while loop
+    if (check == 0) {
+        printf("no one has purchased any Bottles\n");
+    } else {
+        StringPrint(&customers[maxbottles].name);
+        printf(" has purchased the most Bottles (%d)\n", customers[maxbottles].bottles);
+
+    }
+
+    int j = 0;
+    int check1 = -1;
+    int maxdiapers = 0;
+    while (j < num_customers) {
+        if (customers[j].diapers > check1) {
+            check1 = customers[j].diapers;
+            maxdiapers = j;
+            j++;
+        } else {
+            j++;
+        }
+    }
+
+    if (check1 == 0) {
+        printf("no one has purchased any Diapers\n");
+    } else {
+        StringPrint(&customers[maxdiapers].name);
+        printf(" has purchased the most Diapers (%d)\n", customers[maxdiapers].diapers);
+    }
+    int k = 0;
+    int check2 = -1;
+    int maxrattles = 0;
+    while (k < num_customers) {
+        if (customers[k].rattles > check2) {
+            check2 = customers[k].rattles;
+            maxrattles = k;
+            k++;
+        } else {
+            k++;
+        }
+
+    }
+    if (check2 == 0) {
+        printf("no one has purchased any Rattles\n");
+    } else {
+        StringPrint(&customers[maxrattles].name);
+        printf(" has purchased the most Rattles (%d)\n", customers[maxrattles].rattles);
+    }
+}
+
+void processPurchase() {
+    int numBought;
+    String checkName;
+    String checkItem;
+    readString(&checkName);
+    readString(&checkItem);
+    readNum(&numBought);
+    int i = 0;
+    int update = 0;
+    int custUpdate = 0;
+    while (i<num_customers){
+        if(StringIsEqualTo(&checkName,&customers[i].name)){
+            if(StringIsEqualTo(&checkItem, &Bottles1)){
+                if (Inventory.Bottles < numBought){
+                    printf("Sorry ");StringPrint(&checkName);printf(", we only have %d Bottles\n", Inventory.Bottles);
+                }
+                else if (numBought<=0){}
+                else{
+                    customers[i].bottles+= numBought;
+                    Inventory.Bottles-=numBought;
+                }
+
+            }
+            else if(StringIsEqualTo(&checkItem,&Diapers1)){
+                if(Inventory.Diapers<numBought){
+                    printf("Sorry ");StringPrint(&checkName);printf(", we only have %d Diapers\n", Inventory.Diapers);
+                }
+                else if (numBought<=0){}
+                else{
+                    customers[i].diapers+=numBought;
+                    Inventory.Diapers-=numBought;
+                }
+            }
+            else if (StringIsEqualTo(&checkItem,&Rattles1)){
+                if(Inventory.Rattles<numBought){
+                    printf("Sorry ");StringPrint(&checkName);printf(", we only have %d Rattles\n", Inventory.Rattles);
+                }
+                else if (numBought<=0){}
+                else{
+                    customers[custUpdate].rattles+=numBought;
+                    Inventory.Rattles-=numBought;
+                }
+            }
+            update = 1;
+            break;
+        }
+        i++;
+    }
+    if (update == 1||numBought<=0){
+
+    }
+
+
+    else{
+        num_customers++;
+        custUpdate = num_customers-1;
+        customers[custUpdate].name = StringDup(&checkName);
+        if(StringIsEqualTo(&checkItem, &Bottles1)){
+            if (Inventory.Bottles < numBought){
+                printf("Sorry ");StringPrint(&checkName);printf(", we only have %d Bottles\n", Inventory.Bottles);
+            }
+            else{
+                customers[custUpdate].bottles+= numBought;
+                Inventory.Bottles-=numBought;
+            }
+        }
+        else if(StringIsEqualTo(&checkItem,&Diapers1)){
+            if(Inventory.Diapers<numBought){
+                printf("Sorry ");StringPrint(&checkName);printf(", we only have %d Diapers\n", Inventory.Diapers);
+            }
+            else{
+                customers[custUpdate].diapers+=numBought;
+                Inventory.Diapers-=numBought;
+            }
+        }
+        else if (StringIsEqualTo(&checkItem,&Rattles1)){
+            if(Inventory.Rattles<numBought){
+                printf("Sorry ");StringPrint(&checkName);printf(", we only have %d Rattles\n", Inventory.Rattles);
+            }
+            else{
+                customers[custUpdate].rattles+=numBought;
+                Inventory.Rattles-=numBought;
+            }
+        }
+        if((customers[custUpdate].rattles==0)&&(customers[custUpdate].bottles==0)&&(customers[custUpdate
+                                                                                    ].diapers==0)){
+            StringDestroy(&customers[custUpdate].name);
+            num_customers--;
+        }
+
+    }
+    StringDestroy(&checkItem);
+    StringDestroy(&checkName);
+
+}
+
+void processInventory() {
+    int num;
+    String input;
+    readString( &input);
+    if (StringIsEqualTo(&input, &Bottles1)) {
+        readNum(&num);
+        Inventory.Bottles += num;
+    }
+    else if (StringIsEqualTo(&input, &Diapers1)){
+        readNum(&num);
+        Inventory.Diapers += num;
+    }
+    else if(StringIsEqualTo(&input, &Rattles1)){
+        readNum(&num);
+        Inventory.Rattles += num;
+    }
+    StringDestroy(&input);
+}
