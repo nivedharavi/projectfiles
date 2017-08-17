@@ -1,0 +1,400 @@
+/*
+ * Set ADT
+ * Project5.c 
+ *
+ *Nivedha Ravi
+ * nr9475
+ * 7/14/17
+ *
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
+#include "Set.h"
+
+/*
+ * Several of the required functions have been written already
+ * You may use these functions as-is or you may modify them in any way. 
+ * Please NOTE, you are responsible for ensuring that the functions work correctly in 
+ * your project solution. Just because the function works correctly in my solution does 
+ * NOT mean that the function will work correctly in yours. 
+ */
+
+/*
+ * Design NOTES:
+ *
+ * The design provided in this starter kit assumes
+ * (1) empty sets will be represented with length == 0 and elements == nullptr (i.e., address 0)
+ * (2) amortized doubling is not used, and capacity is ignored/unused. Functions should assume that 
+ * the amount of storage available in the elements[] array is equal to length
+ */
+
+
+
+/* done for you already */
+void destroySet(Set* self) {
+	free(self->elements);
+}
+
+/* done for you already */
+void createEmptySet(Set* self) {
+	self->len = 0;
+	self->elements = 0;
+}
+
+/* done for you already */
+void createSingletonSet(Set* self, int x) {
+	self->elements = (int*) malloc(sizeof(int));
+	self->elements[0] = x;
+	self->len = 1;
+}
+
+/* done for you already */
+void createCopySet(Set* self, const Set* other) {
+	self->elements = (int*) malloc(other->len * sizeof(int));
+	for (int k = 0; k < other->len; k += 1) {
+		self->elements[k] = other->elements[k];
+	}
+	self->len = other->len;	
+}
+
+/* done for you already */
+void assignSet(Set* self, const Set* other) {
+	if (self == other) { return; }
+	
+	destroySet(self);
+	createCopySet(self, other);
+}
+
+int binarySearch (const Set* self, int x, int startIndex, int endIndex, bool *found){
+    int mid = 0;
+    while(startIndex<=endIndex){
+        mid = (startIndex+endIndex)/2;
+        if((self->elements[mid])== x){
+            *found= true;
+            return mid;
+        }
+        else if (self->elements[mid]<x){
+            startIndex = mid +1;
+        }
+        else{
+            endIndex=mid-1;
+        }
+    }
+    return mid;
+
+}
+
+/* return true if x is an element of self */
+bool isMemberSet(const Set* self, int x) { //should be log(n)
+    if(isEmptySet(self)){
+        return false;
+    }
+    bool searchResult = false;
+    binarySearch(self, x ,0 , self->len-1, &searchResult);
+    return searchResult;
+}
+
+/*
+ * add x as a new member to this set. 
+ * If x is already a member, then self should not be changed
+ * Be sure to restore the design invariant property that elemnts[] remains sorted
+ * (yes, you can assume it is sorted when the function is called, that's what an invariant is all about)
+ */
+void insertSet(Set* self, int x) {
+    int index = 0;
+    if (isMemberSet(self,x))
+        return;
+    else{
+        if(self->len!=0) {
+            int len1 = self->len;
+            bool addItem = true;
+            int *datamov = (int*) malloc((len1+1) * sizeof(int));
+            for (int i = 0; i < len1; i++) {
+                if (addItem && x < self->elements[i]) { //log(n)
+                    datamov[index] = x;
+                    index++;
+                    addItem = false;
+                }
+                    datamov[index] = self->elements[i];
+                    index++;
+            }
+            if(addItem){
+                datamov[index] = x;
+            }
+            free(self->elements);
+            self->elements = datamov;
+            self->len++;
+        }
+        else{
+            createSingletonSet(self,x);
+        }
+
+    }
+}
+
+
+/*
+ * don't forget: it is OK to try to remove an element
+ * that is NOT in the set.  
+ * If 'x' is not in the set 'self', then
+ * removeSet should do nothing (it's not an error)
+ * Otherwise, ('x' IS in the set), remove x. Be sure to update self->length
+ * It is not necessary (nor recommended) to call malloc -- if removing an element means the 
+ * array on the heap is "too big", that's almost certainly OK, and reallocating a smaller array 
+ * is almost definitely NOT worth the trouble
+ */
+void removeSet(Set* self, int x) {
+    int check  = self->len;
+    if(isEmptySet(self)){
+        return;
+    }
+    int index = 0;
+    bool search = false;
+    index = binarySearch(self, x, 0, self->len-1,&search); //O(log(n))
+    if (search){
+        while(index<check-1) {
+            self->elements[index] = self->elements[index + 1]; //O(n)
+            index++;
+        }
+        self->len --;
+    }
+    return;
+}
+
+/* done for you already */
+void displaySet(const Set* self) {
+	int k;
+	
+	printf("{");
+
+	if (self->len == 0) { 
+		printf("}"); 
+	}
+	else {
+		for (k = 0; k < self->len; k += 1) {
+			if (k < self->len - 1) {
+				printf("%d,", self->elements[k]);
+			} else {
+				printf("%d}", self->elements[k]);
+			}
+		}
+	}
+}
+
+/* return true if self and other have exactly the same elements */
+bool isEqualToSet(const Set* self, const Set* other) {
+    int check = self->len;
+    int check1 = other->len;
+    if(check!=check1){
+        return false;
+    }
+    if ((check==0)&&(check1==0)){
+        return true;
+    }
+    for (int i=0; i<check; i++){
+        if(self->elements[i] ==other->elements[i]);
+        else{
+            return false;
+        }
+    }
+    return true;
+}
+
+/* return true if every element of self is also an element of other */
+bool isSubsetOf(const Set* self, const Set* other) {
+    int selfpoint = self->len;
+    int otherpoint = other->len;
+    if (selfpoint==0){
+        return true;
+    }
+    if (otherpoint==0){
+        return false;
+    }
+    if(selfpoint>otherpoint){
+        return false;
+    }
+    if (isEqualToSet(self,other)){
+        return true;
+    }
+
+    int j =0;
+    int i =0;
+    while( i <selfpoint ){ //time complexity is O(n)
+       if(self->elements[i]==other->elements[j]){
+            i++;
+           j++; continue;
+        }
+        else if(self->elements[i] < other->elements[j]){
+           return false;
+       }
+        else if(self->elements[i]>other->elements[j]){
+           j++;
+       }
+    }
+    return true;
+
+}
+
+/* done for you */
+bool isEmptySet(const Set* self) {
+	return self->len == 0;
+}
+
+/* remove all elements from self that are not also elements of other */
+void intersectFromSet(Set* self, const Set* other) {
+    int selfp = self->len;
+    int op = other->len;
+    if(op==0||selfp==0){
+        destroySet(self);
+        createEmptySet(self);
+        return;
+    }
+    int x=0;
+    int i = 0;
+    int* newdata = (int*)malloc((selfp+op) *sizeof(int));
+    int r = 0;
+    while(i<selfp&&r<op){
+        if(self->elements[i]==other->elements[r]){
+            newdata[x] = self->elements[i];
+            i++;
+            x++;
+            r++;
+        }
+        else if(self->elements[i]<other->elements[r]){
+            i++;
+        }
+        else if (self->elements[i]>other->elements[r]){
+            r++;
+        }
+    }
+    if(x==0){ //if there is no intersection between sets
+        free(newdata);
+        destroySet(self);
+        createEmptySet(self);
+        return;
+    }
+    free (self->elements);
+    self->elements = newdata;
+    self->len = x;
+}
+
+
+
+/* remove all elements from self that are also elements of other */
+void subtractFromSet(Set* self, const Set* other) {
+    int sp = self->len;
+    int op2 = other->len;
+    int m = 0;
+    int y = 0;
+    int n = 0;
+    if (sp == 0 && op2 == 0) {
+        createEmptySet(self);
+        return;
+    }
+    if(sp!=0 && op2==0){
+        return;
+    }
+    if(sp==0){
+        return;
+    }
+    int *subset = (int *) malloc(sp * sizeof(int));
+    while (m < sp && n < op2) {
+        if (self->elements[m] == other->elements[n]) {
+            m++;
+            n++;
+            continue;
+        }
+        if (self->elements[m] < other->elements[n]) {
+            subset[y] = self->elements[m];
+            y++;
+            m++;
+            continue;
+        }
+        if (self->elements[m] > other->elements[n]) {
+            n++;
+            continue;
+        }
+    }
+    if (m != sp) {
+        while (m < sp) {
+            subset[y] = self->elements[m];
+            y++;
+            m++;
+        }
+    }
+    if (y == 0) {
+        free(subset);
+        destroySet(self);
+        createEmptySet(self);
+        return;
+    }
+    self->len = y;
+    free(self->elements);
+    self->elements = subset;
+}
+
+/* add all elements of other to self (obviously, without creating duplicate elements) */
+void unionInSet(Set* self, const Set* other) {
+    int selfagain = self->len;
+    int otheragain = other->len;
+    int x = 0;
+    int i = 0;
+    int j =0;
+    if (selfagain==0 &&otheragain==0){
+        createEmptySet(self);
+        return;
+    }
+    else if (selfagain==0){
+        destroySet(self);
+        createCopySet(self, other);
+        return;
+    }
+    else if (otheragain==0){
+        return;
+    }
+    if(isEqualToSet(self,other)){
+        return;
+    }
+    int* unionset = (int*)malloc((selfagain+otheragain)*sizeof(int));
+    while(x<selfagain&&i<otheragain){
+        if (self->elements[x] == other->elements[i]){
+            unionset[j] = self->elements[x];
+            j++;
+            i++;
+            x++;
+            continue;
+        }
+        if (self->elements[x]<other->elements[i]){
+            unionset[j] = self->elements[x];
+            j++;
+            x++;
+            continue;
+        }
+        if (other->elements[i]<self->elements[x]){
+            unionset[j] = other->elements[i];
+            i++;
+            j++;
+            continue;
+        }
+
+    }
+    if (i!=otheragain){
+        while(i<otheragain){
+            unionset[j] = other->elements[i];
+            i++;
+            j++;
+        }
+    }
+    else if (x!=selfagain){
+        while(x<selfagain){
+            unionset[j] = self->elements[x];
+            j++;
+            x++;
+        }
+    }
+   destroySet(self);
+    self->elements  = unionset;
+    self->len = j;
+}
